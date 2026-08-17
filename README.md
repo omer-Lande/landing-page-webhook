@@ -1,16 +1,56 @@
-# ספורטיקט — דף נחיתה עם טופס יצירת קשר
+# ספורטיקט — דף נחיתה + דשבורד ניהול (Turborepo)
 
-דף נחיתה בעברית (RTL) לעסק שמוכר כרטיסים לאירועי ספורט גדולים בעולם — פרימייר
-ליג, לה ליגה, ליגת האלופות ועוד — כולל חבילות מלונות וטיסות. בתחתית הדף נמצא
-טופס "קבלו הצעת מחיר" שמעביר את הפנייה, דרך Route Handler בצד השרת, לטבלה
-ב-Airtable — כך שמפתח ה-API של Airtable לעולם לא נחשף בדפדפן.
+מונורפו (Turborepo) עם שני אפליקציות Next.js נפרדות, לגמרי עצמאיות זו מזו:
+
+- **`apps/web`** — דף הנחיתה הציבורי בעברית (RTL) לעסק שמוכר כרטיסים לאירועי
+  ספורט גדולים בעולם — פרימייר ליג, לה ליגה, ליגת האלופות ועוד — כולל חבילות
+  מלונות וטיסות. בתחתית הדף טופס "קבלו הצעת מחיר" ששולח את הפנייה, דרך
+  Route Handler בצד השרת, לטבלה ב-Airtable.
+- **`apps/admin`** — דשבורד ניהול מוגן בהתחברות, לצפייה בפניות שהתקבלו
+  ועדכון הסטטוס שלהן.
+
+שתי האפליקציות חולקות עיצוב ורכיבי UI (`packages/ui`) ולוגיקת Airtable
+(`packages/core`), אבל רצות, נבנות, ומתעדכנות **לגמרי בנפרד** — שינוי בדשבורד
+לא נוגע כלל בדף הנחיתה, ולהפך.
 
 ## טכנולוגיות
 
+- **Turborepo** + npm workspaces
 - **Next.js 16** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** + **shadcn/ui** (מבוסס על `@base-ui/react`)
-- **react-hook-form** + **zod** לוולידציית הטופס
-- **Airtable REST API** לשמירת הפניות
+- **react-hook-form** + **zod** לוולידציית הטופס הציבורי
+- **jose** לחתימת עוגיית ההתחברות בדשבורד (JWT)
+- **Airtable REST API** לשמירת וקריאת הפניות
+
+## מבנה המונורפו
+
+```
+/apps
+  /web                     → דף הנחיתה הציבורי — רץ על פורט 3000
+    /app/page.tsx
+    /app/layout.tsx         → RTL, פונטים (Karantina / Assistant / Cascadia Mono)
+    /app/api/submit/route.ts → מוודא תקינות ושולח ל-Airtable
+    /components/landing-form.tsx
+    /lib/validation.ts       → סכמת הוולידציה (zod) של הטופס
+    /public/logos             → לוגואים של הליגות
+  /admin                   → דשבורד הניהול — רץ על פורט 3001
+    /app/page.tsx            → רשימת הפניות (server component, ממוין ומעודכן)
+    /app/login/page.tsx       → מסך התחברות
+    /app/api/auth/login/route.ts
+    /app/api/auth/logout/route.ts
+    /app/api/requests/[id]/status/route.ts → עדכון סטטוס פנייה
+    /components/status-select.tsx
+    /components/logout-button.tsx
+    /lib/session.ts            → חתימה ואימות עוגיית ההתחברות
+    /lib/sort-requests.ts       → לוגיקת מיון הפניות
+    /lib/format-relative-time.ts
+    /proxy.ts                 → חוסם גישה לכל האפליקציה חוץ מ-/login ו-/api/auth/*
+/packages
+  /ui                      → קומפוננטות shadcn משותפות (button, input, label,
+                              textarea, checkbox) + עיצוב המותג (theme.css)
+  /core                    → lib/airtable.ts — הפונקציות המשותפות לקריאה/כתיבה
+                              מול Airtable, ומשמשות את שתי האפליקציות
+```
 
 ## התקנה והרצה מקומית
 
@@ -21,19 +61,33 @@
 
 ### שלבים
 
-1. התקנת תלויות:
+1. התקנת תלויות (בשורש המונורפו — מתקין את שתי האפליקציות ביחד):
 
    ```bash
    npm install
    ```
 
-2. יצירת קובץ `.env.local` בשורש הפרויקט (הקובץ לא נכלל ב-git) לפי הדוגמה
-   ב-`.env.local.example`:
+2. יצירת `.env.local` **בכל אפליקציה בנפרד** (הקבצים לא נכללים ב-git), לפי
+   הדוגמאות ב-`apps/web/.env.local.example` ו-`apps/admin/.env.local.example`:
+
+   **`apps/web/.env.local`:**
 
    ```bash
    AIRTABLE_API_KEY=
    AIRTABLE_BASE_ID=
    AIRTABLE_TABLE_NAME=
+   ```
+
+   **`apps/admin/.env.local`:** (אותם משתני Airtable + פרטי ההתחברות לדשבורד)
+
+   ```bash
+   AIRTABLE_API_KEY=
+   AIRTABLE_BASE_ID=
+   AIRTABLE_TABLE_NAME=
+
+   ADMIN_USERNAME=
+   ADMIN_PASSWORD=
+   SESSION_SECRET=
    ```
 
    - **AIRTABLE_API_KEY** — Personal Access Token מ-
@@ -44,21 +98,29 @@
      שמתחיל ב-`app...` (למשל `appXXXXXXXXXXXXXX`).
    - **AIRTABLE_TABLE_NAME** — שם הטבלה בבסיס, **רגיש לאותיות גדולות/קטנות**
      (case-sensitive), חייב להתאים בדיוק לשם בפועל.
+   - **ADMIN_USERNAME** / **ADMIN_PASSWORD** — פרטי ההתחברות לדשבורד הניהול.
+     בחרו ערכים משלכם — אלה לא ערכי ברירת מחדל מובנים בקוד.
+   - **SESSION_SECRET** — מחרוזת אקראית וסודית לחתימת עוגיית ההתחברות (JWT).
+     אפשר לייצר אחת עם `openssl rand -hex 32`.
 
-3. הרצת שרת הפיתוח:
+3. הרצת שתי האפליקציות במקביל:
 
    ```bash
    npm run dev
    ```
 
-   האתר יעלה בכתובת [http://localhost:3000](http://localhost:3000).
+   `turbo run dev` מריץ את שתי האפליקציות יחד:
+   - דף הנחיתה: [http://localhost:3000](http://localhost:3000)
+   - דשבורד הניהול: [http://localhost:3001](http://localhost:3001)
+
+   אפשר גם להריץ כל אפליקציה בנפרד: `npm run dev --workspace=web` או
+   `npm run dev --workspace=admin`.
 
 ### פקודות נוספות
 
 ```bash
-npm run build   # build לפרודקשן
-npm run start   # הרצת ה-build בפרודקשן
-npm run lint    # בדיקת ESLint
+npm run build   # build לפרודקשן לשתי האפליקציות (turbo run build)
+npm run lint    # בדיקת ESLint לשתי האפליקציות (turbo run lint)
 ```
 
 ## מבנה הטבלה הנדרש ב-Airtable
@@ -76,24 +138,25 @@ npm run lint    # בדיקת ESLint
 | `Status`       | Single select          | `חדש`, `קיבל הצעת מחיר`, `סגר חבילה`, `לא סגר חבילה` (נקבע אוטומטית ל-`חדש` בכל פנייה חדשה) |
 | `Created Time` | Created time           | מתמלא אוטומטית על ידי Airtable                                |
 
-## מבנה הפרויקט
+## דשבורד ניהול
 
-```
-/app
-  /page.tsx              → דף הנחיתה
-  /layout.tsx             → RTL, פונטים (Karantina / Assistant / Cascadia Mono)
-  /globals.css             → משתני העיצוב (צבעים, פונטים, אלמנט הכרטיס)
-  /api/submit/route.ts    → Route Handler: מוודא תקינות ושולח ל-Airtable
-/components
-  /landing-form.tsx        → קומפוננטת הטופס (client component)
-  /ui/...                  → קומפוננטות shadcn (button, input, label, textarea, checkbox)
-/lib
-  /validation.ts            → סכמת הוולידציה (zod)
-/public/logos               → לוגואים של הליגות/האירועים המוצגים בדף
-```
+מסך `/login` באפליקציית ה-admin מבקש שם משתמש וסיסמה (מול `ADMIN_USERNAME` /
+`ADMIN_PASSWORD`), ובהצלחה קובע עוגיית session חתומה (JWT, `jose`, בתוקף ל-8
+שעות). `apps/admin/proxy.ts` חוסם גישה לכל נתיב באפליקציה — כולל נתיבי ה-API —
+חוץ מ-`/login` ו-`/api/auth/*`, ומפנה חזרה למסך ההתחברות ללא session תקף.
+
+**סדר התצוגה של הפניות:** פניות בסטטוס `חדש` תמיד למעלה, ואחריהן
+`קיבל הצעת מחיר`, ולבסוף `סגר חבילה` / `לא סגר חבילה`. בתוך כל קבוצת סטטוס,
+הפנייה הישנה ביותר (שממתינה הכי הרבה זמן) מוצגת ראשונה — כדי שהמנהל תמיד
+יראה קודם את מה שהכי דחוף לטפל בו. הלוגיקה נמצאת ב-
+`apps/admin/lib/sort-requests.ts`.
 
 ## אבטחה
 
-מפתח ה-API של Airtable נשמר אך ורק ב-`.env.local` (לא ב-git) ומשמש רק בצד
-השרת בתוך `app/api/submit/route.ts`. הטופס בצד הלקוח שולח בקשה ל-`/api/submit`
-בלבד, ולעולם לא ישירות ל-Airtable.
+- מפתח ה-API של Airtable נשמר רק ב-`.env.local` של כל אפליקציה (לא ב-git),
+  ומשמש אך ורק בצד השרת, דרך `packages/core/src/airtable.ts`.
+- הטופס הציבורי שולח בקשה ל-`/api/submit` בלבד, ולעולם לא ישירות ל-Airtable.
+- דשבורד הניהול פועל דרך `/api/requests/*` בלבד; עוגיית ההתחברות היא
+  `httpOnly`, חתומה, ו-`secure` בפרודקשן.
+- בדיקת הסיסמה בהתחברות משתמשת ב-`crypto.timingSafeEqual` כדי למנוע
+  timing attacks.

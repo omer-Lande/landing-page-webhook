@@ -1,0 +1,197 @@
+@custom-variant dark (&:is(.dark *));
+
+/*
+  SporTicket brand theme — kraft ticket stock and burnished gold.
+  Shared by both apps/web and apps/admin so the two apps stay visually
+  identical even though they're built and deployed independently.
+  The page borrows its vocabulary from the two objects this business trades in:
+  the admission ticket (perforated stub, gate/seat fields, barcode strip) and
+  the departures board (split-flap digits, live ticker). Karantina is a
+  stencil display face in the spirit of terrace tifo banners; Cascadia Mono
+  carries the "printed ticket" data fields — both keep their Hebrew glyphs.
+*/
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-data: var(--font-ticket-mono);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  --background: #f0e6d0; /* manila / kraft envelope */
+  --background-deep: #e6d8b8; /* deeper kraft, for section rhythm */
+  --foreground: #2e2a22; /* soft ink, not black */
+  --card: #fbf5e6; /* lighter ticket stock — cards read as objects on the kraft */
+  --card-foreground: #2e2a22;
+  --primary: #b9791d; /* burnished gold — floodlight, legible as text too */
+  --primary-foreground: #fbf3e4;
+  --secondary: #3f6b6f; /* dusty teal ink, evening kickoff sky */
+  --secondary-foreground: #f0e6d0;
+  --muted: #e6d8b8;
+  --muted-foreground: #0a0a0a;
+  --accent: #dfe8e6;
+  --accent-foreground: #2e2a22;
+  --destructive: #b13d40; /* red card, softened */
+  --destructive-foreground: #fbeceb;
+  --border: #d8c79c;
+  --input: #d8c79c;
+  --ring: #b9791d;
+  --radius: 0.65rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Ticket-stub card: the brand's one signature object, reused for the hero,
+   services, the used-ticket testimonial, and the admin dashboard's cards.
+   Notch color assumes the card sits directly on --background; add
+   .ticket--on-deep when it sits on a --background-deep panel instead, so
+   the punched notches still blend in. */
+.ticket {
+  position: relative;
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 32px -20px rgb(46 42 34 / 0.25);
+}
+
+.ticket-tear {
+  position: relative;
+  height: 0;
+  margin-inline: 1.5rem;
+  border-top: 2px dashed color-mix(in oklch, var(--card-foreground) 22%, transparent);
+}
+
+.ticket-tear::before,
+.ticket-tear::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  background: var(--background);
+  border-radius: 9999px;
+  transform: translateY(-50%);
+}
+.ticket-tear::before {
+  inset-inline-end: -2.1rem;
+}
+.ticket-tear::after {
+  inset-inline-start: -2.1rem;
+}
+
+.ticket--on-deep .ticket-tear::before,
+.ticket--on-deep .ticket-tear::after {
+  background: var(--background-deep);
+}
+
+.ticket input::placeholder,
+.ticket textarea::placeholder {
+  color: color-mix(in oklch, var(--card-foreground) 45%, transparent);
+}
+
+.ticket-barcode {
+  block-size: 1.5rem;
+  background-image: repeating-linear-gradient(
+    to left,
+    currentColor 0,
+    currentColor 2px,
+    transparent 2px,
+    transparent 5px,
+    currentColor 5px,
+    currentColor 8px,
+    transparent 8px,
+    transparent 11px
+  );
+}
+
+/* Split-flap board digits, shared by the departures-style stat row.
+   Real airport/stadium boards are dark tiles regardless of the room around
+   them, so this stays a deliberate dark accent on the kraft page. */
+.flap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ticket-mono);
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--background) 20%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flap {
+    animation: flap-settle 0.5s ease-out backwards;
+  }
+}
+
+@keyframes flap-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* League ticker: a live-scores style marquee. The track holds three
+   identical copies of the list back to back; sliding by exactly one third
+   of the track's own width loops it with no visible seam or gap — the copy
+   that scrolls off the left is already waiting, replayed, on the right. */
+.ticker-track {
+  display: flex;
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track {
+    animation: ticker-scroll 42s linear infinite;
+  }
+  .ticker-viewport:hover .ticker-track,
+  .ticker-viewport:focus-within .ticker-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.3334%);
+  }
+}
