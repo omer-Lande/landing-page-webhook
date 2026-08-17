@@ -2,6 +2,8 @@ import { ArrowLeft, Hotel, Plane, Ticket } from "lucide-react";
 
 import { buttonVariants } from "@repo/ui/button";
 import { LandingForm } from "@/components/landing-form";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 
 const stats = [
   { value: "+500", label: "אירועי ספורט בשנה" },
@@ -100,26 +102,7 @@ const steps = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-          <span className="font-heading text-2xl text-foreground">ספורטיקט</span>
-          <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#leagues" className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline">
-              הליגות שלנו
-            </a>
-            <a href="#how-it-works" className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline">
-              איך זה עובד
-            </a>
-            <a href="#testimonial" className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline">
-              לקוחות מספרים
-            </a>
-          </nav>
-          <a href="#contact" className={buttonVariants({ size: "sm" })}>
-            דברו איתנו
-          </a>
-        </div>
-        <div className="ticket-barcode text-foreground/15" />
-      </header>
+      <SiteHeader />
 
       <main className="flex flex-1 flex-col">
         <section className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-6 py-20 sm:px-10 sm:py-28 lg:grid-cols-2 lg:gap-16">
@@ -358,13 +341,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="ticket-barcode text-foreground/15" />
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row sm:px-10">
-          <span className="font-heading text-xl text-foreground">ספורטיקט</span>
-          <span className="text-sm text-muted-foreground">כל משחק. בכל מקום.</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

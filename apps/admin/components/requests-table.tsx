@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Square, SquareCheck } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Search, Square, SquareCheck } from "lucide-react";
 
 import { REQUEST_STATUSES, type AirtableRequestRecord, type RequestStatus } from "@repo/core/airtable";
 import { formatDate } from "@/lib/format-date";
@@ -10,13 +10,26 @@ import { StatusSelect } from "@/components/status-select";
 
 type DateSort = "default" | "asc" | "desc";
 
+// TODO: promote status + search into a filter drawer once more filter
+// dimensions (prefer-call, date range) are needed — a single dropdown and a
+// search box don't justify one yet.
 export function RequestsTable({ requests }: { requests: AirtableRequestRecord[] }) {
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">("all");
   const [dateSort, setDateSort] = useState<DateSort>("default");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const visibleRequests = useMemo(() => {
-    const filtered =
-      statusFilter === "all" ? requests : requests.filter((req) => req.status === statusFilter);
+    const query = searchQuery.trim().toLowerCase();
+
+    const filtered = requests.filter((req) => {
+      if (statusFilter !== "all" && req.status !== statusFilter) return false;
+      if (!query) return true;
+
+      return [req.fullName, req.email, req.phone, req.message]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
 
     if (dateSort === "default") return filtered;
 
@@ -24,7 +37,7 @@ export function RequestsTable({ requests }: { requests: AirtableRequestRecord[] 
       const diff = new Date(a.createdTime).getTime() - new Date(b.createdTime).getTime();
       return dateSort === "asc" ? diff : -diff;
     });
-  }, [requests, statusFilter, dateSort]);
+  }, [requests, statusFilter, searchQuery, dateSort]);
 
   function cycleDateSort() {
     setDateSort((current) =>
@@ -37,6 +50,20 @@ export function RequestsTable({ requests }: { requests: AirtableRequestRecord[] 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="חיפוש חופשי — שם, אימייל, טלפון או הודעה"
+            className="h-8 w-64 rounded-lg border border-border bg-card ps-8 pe-2.5 text-sm text-card-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-80"
+          />
+        </div>
+
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           סטטוס:
           <select
