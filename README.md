@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ספורטיקט — דף נחיתה עם טופס יצירת קשר
 
-## Getting Started
+דף נחיתה בעברית (RTL) לעסק שמוכר כרטיסים לאירועי ספורט גדולים בעולם — פרימייר
+ליג, לה ליגה, ליגת האלופות ועוד — כולל חבילות מלונות וטיסות. בתחתית הדף נמצא
+טופס "קבלו הצעת מחיר" שמעביר את הפנייה, דרך Route Handler בצד השרת, לטבלה
+ב-Airtable — כך שמפתח ה-API של Airtable לעולם לא נחשף בדפדפן.
 
-First, run the development server:
+## טכנולוגיות
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** + **shadcn/ui** (מבוסס על `@base-ui/react`)
+- **react-hook-form** + **zod** לוולידציית הטופס
+- **Airtable REST API** לשמירת הפניות
+
+## התקנה והרצה מקומית
+
+### דרישות מקדימות
+
+- Node.js גרסה 20 ומעלה
+- חשבון Airtable עם בסיס (Base) וטבלה מוכנים (ראו מבנה הטבלה למטה)
+
+### שלבים
+
+1. התקנת תלויות:
+
+   ```bash
+   npm install
+   ```
+
+2. יצירת קובץ `.env.local` בשורש הפרויקט (הקובץ לא נכלל ב-git) לפי הדוגמה
+   ב-`.env.local.example`:
+
+   ```bash
+   AIRTABLE_API_KEY=
+   AIRTABLE_BASE_ID=
+   AIRTABLE_TABLE_NAME=
+   ```
+
+   - **AIRTABLE_API_KEY** — Personal Access Token מ-
+     [airtable.com/create/tokens](https://airtable.com/create/tokens), עם
+     ה-scopes `data.records:read` ו-`data.records:write`, ועם הבסיס (Base)
+     הרלוונטי מסומן תחת **Access**.
+   - **AIRTABLE_BASE_ID** — מתוך כתובת ה-URL של הבסיס באירטייבל, המקטע
+     שמתחיל ב-`app...` (למשל `appXXXXXXXXXXXXXX`).
+   - **AIRTABLE_TABLE_NAME** — שם הטבלה בבסיס, **רגיש לאותיות גדולות/קטנות**
+     (case-sensitive), חייב להתאים בדיוק לשם בפועל.
+
+3. הרצת שרת הפיתוח:
+
+   ```bash
+   npm run dev
+   ```
+
+   האתר יעלה בכתובת [http://localhost:3000](http://localhost:3000).
+
+### פקודות נוספות
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build   # build לפרודקשן
+npm run start   # הרצת ה-build בפרודקשן
+npm run lint    # בדיקת ESLint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## מבנה הטבלה הנדרש ב-Airtable
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+הטבלה חייבת להכיל את השדות הבאים, בדיוק בשמות האלה (רגיש לאותיות
+גדולות/קטנות):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| שם השדה        | סוג השדה ב-Airtable | הערות                                                       |
+| -------------- | -------------------- | ------------------------------------------------------------ |
+| `Name`         | Single line text      | שם מלא — שדה חובה בטופס                                      |
+| `Email`        | Single line text      | אימייל — שדה חובה בטופס                                      |
+| `Phone`        | Single line text      | טלפון — שדה לא חובה, אלא אם מסומן "מעדיף/ה שיחת טלפון"        |
+| `Message`      | Long text             | תיאור הפנייה — שדה חובה בטופס                                |
+| `Prefer Call`  | Checkbox              | האם המשתמש מעדיף שיחת טלפון להצעת מחיר                       |
+| `Status`       | Single select          | `חדש`, `קיבל הצעת מחיר`, `סגר חבילה`, `לא סגר חבילה` (נקבע אוטומטית ל-`חדש` בכל פנייה חדשה) |
+| `Created Time` | Created time           | מתמלא אוטומטית על ידי Airtable                                |
 
-## Learn More
+## מבנה הפרויקט
 
-To learn more about Next.js, take a look at the following resources:
+```
+/app
+  /page.tsx              → דף הנחיתה
+  /layout.tsx             → RTL, פונטים (Karantina / Assistant / Cascadia Mono)
+  /globals.css             → משתני העיצוב (צבעים, פונטים, אלמנט הכרטיס)
+  /api/submit/route.ts    → Route Handler: מוודא תקינות ושולח ל-Airtable
+/components
+  /landing-form.tsx        → קומפוננטת הטופס (client component)
+  /ui/...                  → קומפוננטות shadcn (button, input, label, textarea, checkbox)
+/lib
+  /validation.ts            → סכמת הוולידציה (zod)
+/public/logos               → לוגואים של הליגות/האירועים המוצגים בדף
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## אבטחה
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+מפתח ה-API של Airtable נשמר אך ורק ב-`.env.local` (לא ב-git) ומשמש רק בצד
+השרת בתוך `app/api/submit/route.ts`. הטופס בצד הלקוח שולח בקשה ל-`/api/submit`
+בלבד, ולעולם לא ישירות ל-Airtable.
