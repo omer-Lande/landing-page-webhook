@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 
 import { createRequest } from "@repo/core/airtable";
+import { getClientIp, isRateLimited } from "@repo/core/rate-limit";
 import { landingFormSchema } from "@/lib/validation";
 
+const SUBMIT_LIMIT = 5;
+const SUBMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
 export async function POST(request: Request) {
+  if (isRateLimited(`submit:${getClientIp(request)}`, SUBMIT_LIMIT, SUBMIT_WINDOW_MS)) {
+    return NextResponse.json(
+      { error: "יותר מדי פניות בזמן קצר. נסו שוב בעוד כמה דקות." },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
 
   if (!body) {
@@ -38,10 +49,10 @@ export async function POST(request: Request) {
 
   if (!airtableResponse.ok) {
     const errorBody = await airtableResponse.json().catch(() => null);
-    console.error("Airtable submission failed:", errorBody);
+    console.error("Airtable submission failed:", airtableResponse.status, errorBody);
     return NextResponse.json(
       { error: "אירעה שגיאה בשמירת הפנייה. נסו שוב." },
-      { status: airtableResponse.status }
+      { status: 502 } // upstream failure — never leak Airtable's own status to the client
     );
   }
 

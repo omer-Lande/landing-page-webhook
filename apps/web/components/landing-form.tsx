@@ -68,6 +68,7 @@ export function LandingForm() {
           <Input
             id="fullName"
             autoComplete="name"
+            maxLength={100}
             aria-required="true"
             aria-invalid={!!errors.fullName}
             aria-describedby={errors.fullName ? "fullName-error" : undefined}
@@ -89,6 +90,7 @@ export function LandingForm() {
             type="email"
             autoComplete="email"
             dir="ltr"
+            maxLength={254}
             aria-required="true"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
@@ -111,6 +113,7 @@ export function LandingForm() {
             autoComplete="tel"
             dir="ltr"
             placeholder="050-1234567"
+            maxLength={20}
             aria-invalid={!!errors.phone}
             aria-describedby={errors.phone ? "phone-error" : undefined}
             {...register("phone")}
@@ -130,6 +133,7 @@ export function LandingForm() {
             id="message"
             rows={4}
             placeholder="לדוגמה: גמר ליגת האלופות 2026, זוג כרטיסים + 3 לילות מלון"
+            maxLength={2000}
             aria-required="true"
             aria-invalid={!!errors.message}
             aria-describedby={errors.message ? "message-error" : undefined}
