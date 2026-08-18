@@ -15,7 +15,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-heading: var(--font-display);
-  --font-data: var(--font-ticket-mono);
+  --font-data: var(--font-ticket-mono-latin), var(--font-ticket-mono-hebrew);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -144,7 +144,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-ticket-mono);
+  font-family: var(--font-ticket-mono-latin), var(--font-ticket-mono-hebrew);
   background: var(--foreground);
   color: var(--background);
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--background) 20%, transparent);

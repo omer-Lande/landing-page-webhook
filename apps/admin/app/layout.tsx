@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Assistant, Cascadia_Mono, Karantina } from "next/font/google";
+import { Assistant, Karantina } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const karantina = Karantina({
@@ -15,10 +16,17 @@ const assistant = Assistant({
   display: "swap",
 });
 
-const cascadiaMono = Cascadia_Mono({
-  variable: "--font-ticket-mono",
-  subsets: ["hebrew", "latin"],
-  weight: ["500", "600"],
+const cascadiaMonoLatin = localFont({
+  src: "./fonts/cascadia-mono-latin.woff2",
+  weight: "500 600",
+  variable: "--font-ticket-mono-latin",
+  display: "swap",
+});
+
+const cascadiaMonoHebrew = localFont({
+  src: "./fonts/cascadia-mono-hebrew.woff2",
+  weight: "500 600",
+  variable: "--font-ticket-mono-hebrew",
   display: "swap",
 });
 
@@ -33,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="he"
       dir="rtl"
-      className={`${karantina.variable} ${assistant.variable} ${cascadiaMono.variable} h-full antialiased`}
+      className={`${karantina.variable} ${assistant.variable} ${cascadiaMonoLatin.variable} ${cascadiaMonoHebrew.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
